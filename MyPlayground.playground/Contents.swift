@@ -33,7 +33,7 @@ protocol BankApi {
 
 // Тексты ошибок
 enum TextErrors: String {
-    case wrongPingOrCard = "Неверный пин или карта"
+    case wrongPinOrCard = "Неверный пин-код или номер карты"
     case insufficientFunds = "Недостаточно средств на счете"
     case wrongPhoneNumber = "Неверный номер телефона"
 }
@@ -86,14 +86,14 @@ class BankServer: BankApi {
     private let user: UserData
     
     func showUserBalance() {
-        print("Вы выбрали \(DescriptionTypesAvailableOperations.balanceOnBankDeposit.rawValue), ваш баланс: \(user.userBankDeposit) рублей")
+        print("Вы выбрали операцию '\(DescriptionTypesAvailableOperations.balanceOnBankDeposit.rawValue)', ваш баланс: \(user.userBankDeposit) рублей")
     }
     func showUserToppedUpMobilePhoneCash(cash: Float){}
     func showUserToppedUpMobilePhoneDeposite(deposit: Float){}
     func showWithdrawalDeposit(cash: Float){}
     func showTopUpAccount(cash: Float){}
     func showError(error: TextErrors){
-        print(error)
+        print(error.rawValue)
     }
 
     func checkUserPhone(phone: String) -> Bool{
@@ -121,22 +121,21 @@ class BankServer: BankApi {
 
 extension BankServer {
     func doAction(userCardId: String, userCardPin: Int, actions: UserActions, payment: PaymentMethod?) {
-        if !isHaveError(userCardId: userCardId, userCardPin: userCardPin) {
+        if checkCurrentUser(userCardId: userCardId, userCardPin: userCardPin) {
+            sayHello()
             switch actions {
                 case UserActions.balanceOnBankDeposit:
                     showUserBalance()
                 default:
                     showUserBalance()
             }
+        } else {
+            showError(error: TextErrors.wrongPinOrCard)
         }
     }
-    func isHaveError(userCardId: String, userCardPin: Int) -> Bool {
-        if checkCurrentUser(userCardId: userCardId, userCardPin: userCardPin) == false {
-            showError(error: TextErrors.wrongPingOrCard)
-            return true
-        }
-       
-        return false
+    
+    private func sayHello() {
+        print("Добрый день, \(user.userName)")
     }
 }
 
