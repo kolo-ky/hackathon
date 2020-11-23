@@ -135,7 +135,7 @@ extension BankServer {
     }
     
     private func sayHello() {
-        print("Добрый день, \(user.userName)")
+        print("Добрый день, \(user.userName)!")
     }
 }
 
