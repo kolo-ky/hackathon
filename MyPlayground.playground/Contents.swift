@@ -91,7 +91,7 @@ class User: UserData {
 }
 
 class BankServer: BankApi {
-    private let user: UserData
+    private var user: UserData
     
     func showUserBalance() {
         print("Вы выбрали операцию '\(DescriptionTypesAvailableOperations.balanceOnBankDeposit.rawValue)', ваш баланс: \(user.userBankDeposit) рублей")
@@ -120,7 +120,15 @@ class BankServer: BankApi {
     func topUpPhoneBalanceCash(pay: Float){}
     func topUpPhoneBalanceDeposit(pay: Float){}
     func getCashFromDeposit(cash: Float){}
-    func putCashDeposit(topUp: Float){}
+    func putCashDeposit(topUp: Float){
+        print("Вы выбрали операцию '\(DescriptionTypesAvailableOperations.withdrawingCashFromBankDeposit.rawValue)'")
+        print("и запросили сумму \(topUp) рублей")
+        user.userBankDeposit = user.userBankDeposit - topUp
+        user.userCash = user.userCash + topUp
+        print("возьмите деньги")
+        print("теперь на вашем балансе \(user.userBankDeposit) рублей")
+        print("а в кармане \(user.userCash) рублей")
+    }
     
     init(user: UserData) {
         self.user = user
@@ -135,11 +143,12 @@ extension BankServer {
                 case UserActions.balanceOnBankDeposit:
                     showUserBalance()
                 case UserActions.withdrawingCashFromBankDeposit:
-                    if checkMaxAccountDeposit(withdraw: 22) {
-                        let val = getValueFromActions(actions)
-                        print("111")
-                    } else {
-                        showError(error: TextErrors.insufficientFunds)
+                    if let cash = getValueFromActions(actions) {
+                        if checkMaxAccountDeposit(withdraw: cash) {
+                            putCashDeposit(topUp: cash)
+                        } else {
+                            showError(error: TextErrors.insufficientFunds)
+                        }
                     }
                 default:
                     showUserBalance()
@@ -162,14 +171,14 @@ class ATM {
   private let action: UserActions
   private let paymentMethod: PaymentMethod?
  
-    init(userCardId: String, userCardPin: Int, someBank: BankApi, action: UserActions, paymentMethod: PaymentMethod? = nil) {
+  init(userCardId: String, userCardPin: Int, someBank: BankApi, action: UserActions, paymentMethod: PaymentMethod? = nil) {
     self.userCardId = userCardId
     self.userCardPin = userCardPin
     self.someBank = someBank
     self.action = action
     self.paymentMethod = paymentMethod
 
-        sendUserDataToBank(userCardId: userCardId, userCardPin: userCardPin, actions: action, payment: paymentMethod)
+    sendUserDataToBank(userCardId: userCardId, userCardPin: userCardPin, actions: action, payment: paymentMethod)
   }
  
  
