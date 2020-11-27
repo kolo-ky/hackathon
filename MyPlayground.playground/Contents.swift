@@ -1,3 +1,11 @@
+// хелпер
+func getValueFromActions(_ expression: UserActions) -> Float? {
+     switch expression {
+         case let .withdrawingCashFromBankDeposit(cash):
+               return cash
+         default: return nil
+     }
+}
 
 // Абстракция данных пользователя
 protocol UserData {
@@ -50,7 +58,7 @@ enum DescriptionTypesAvailableOperations: String {
 // Действия, которые пользователь может выбирать в банкомате (имитация кнопок)
 enum UserActions {
     case balanceOnBankDeposit //запрос баланса на банковском депозите
-    case withdrawingCashFromBankDeposit //снятие наличных с банковского депозита
+    case withdrawingCashFromBankDeposit(cash: Float) //снятие наличных с банковского депозита
     case replenishmentBankDepositInCash //пополнение банковского депозита наличными
     case phoneBalanceInCash //пополнение баланса телефона наличными
     case phoneBalanceFromBankDeposit //пополнение баланса телефона с банковского депозита
@@ -103,7 +111,7 @@ class BankServer: BankApi {
         return self.user.userCash <= cash
     }
     func checkMaxAccountDeposit(withdraw: Float) -> Bool{
-        return self.user.userBankDeposit <= withdraw
+        return self.user.userBankDeposit > withdraw
     }
     func checkCurrentUser(userCardId: String, userCardPin: Int) -> Bool{
         return self.user.userCardId == userCardId && self.user.userCardPin == userCardPin
@@ -126,6 +134,13 @@ extension BankServer {
             switch actions {
                 case UserActions.balanceOnBankDeposit:
                     showUserBalance()
+                case UserActions.withdrawingCashFromBankDeposit:
+                    if checkMaxAccountDeposit(withdraw: 22) {
+                        let val = getValueFromActions(actions)
+                        print("111")
+                    } else {
+                        showError(error: TextErrors.insufficientFunds)
+                    }
                 default:
                     showUserBalance()
             }
@@ -147,19 +162,19 @@ class ATM {
   private let action: UserActions
   private let paymentMethod: PaymentMethod?
  
-  init(userCardId: String, userCardPin: Int, someBank: BankApi, action: UserActions, paymentMethod: PaymentMethod? = nil) {
+    init(userCardId: String, userCardPin: Int, someBank: BankApi, action: UserActions, paymentMethod: PaymentMethod? = nil) {
     self.userCardId = userCardId
     self.userCardPin = userCardPin
     self.someBank = someBank
     self.action = action
     self.paymentMethod = paymentMethod
 
-    sendUserDataToBank(userCardId: userCardId, userCardPin: userCardPin, actions: action, payment: paymentMethod )
+        sendUserDataToBank(userCardId: userCardId, userCardPin: userCardPin, actions: action, payment: paymentMethod)
   }
  
  
-  public final func sendUserDataToBank(userCardId: String, userCardPin: Int, actions: UserActions, payment: PaymentMethod?) {
-    someBank.doAction(userCardId: userCardId, userCardPin: userCardPin, actions: actions, payment: payment)
+    public final func sendUserDataToBank(userCardId: String, userCardPin: Int, actions: UserActions, payment: PaymentMethod?) {
+        someBank.doAction(userCardId: userCardId, userCardPin: userCardPin, actions: actions, payment: payment)
   }
 }
 
@@ -178,6 +193,11 @@ let someUser: UserData = User(
 let bankClient = BankServer(user: someUser)
 
 // отправляем действие через банк
-let someAtm = ATM(userCardId: "4000-1234-5673-9010", userCardPin: 3404, someBank: bankClient, action: UserActions.balanceOnBankDeposit)
+let someAtm = ATM(
+    userCardId: "4000-1234-5673-9010",
+    userCardPin: 3404,
+    someBank: bankClient,
+    action: UserActions.withdrawingCashFromBankDeposit(cash: 100)
+)
 
 
